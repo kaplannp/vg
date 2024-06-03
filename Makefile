@@ -54,7 +54,7 @@ PKG_CONFIG_STATIC_DEPS := protobuf jansson
 # We don't ask for -fopenmp here because how we get it can depend on the compiler.
 # We don't ask for automatic Make dependency file (*.d) generation here because
 # the options we pass can interfere with similar options in dependency project.
-CXXFLAGS := -O3 -Werror=return-type -ggdb -g $(CXXFLAGS)
+CXXFLAGS := -O3 -Werror=return-type -ggdb -g3 $(CXXFLAGS)
 # Keep dependency generation flags for just our own sources
 DEPGEN_FLAGS := -MMD -MP
 

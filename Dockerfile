@@ -3,7 +3,8 @@
 # Use Google's non-rate-limited mirror of Docker Hub to get our base image.
 # This helps automated Quay builds because Quay hasn't built a caching system
 # and exposes pull rate limits to users.
-FROM mirror.gcr.io/library/ubuntu:20.04 AS base
+#FROM mirror.gcr.io/library/ubuntu:20.04 AS base
+FROM intel/oneapi-vtune:2024.1.0-devel-ubuntu22.04 AS base
 MAINTAINER vgteam
 
 RUN echo base > /stage.txt
