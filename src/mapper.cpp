@@ -2377,7 +2377,7 @@ Mapper::Mapper(PathPositionHandleGraph* xidex,
     , band_multimaps(4)
     , always_rescue(false)
     , max_cluster_mapping_quality(1024)
-    , use_cluster_mq(false)
+    , use_cluster_mq(false) //zkn it seems like this is always false
     , simultaneous_pair_alignment(true)
     , drop_chain(0.2)
     , mq_overlap(0.2)
@@ -3644,6 +3644,7 @@ set<const vector<MaximalExactMatch>* > Mapper::clusters_to_drop(const vector<vec
     return to_drop;
 }
 
+//zkn This is the post seeding step. It contains clustering and alginment
 vector<Alignment>
 Mapper::align_mem_multi(const Alignment& aln,
                         vector<MaximalExactMatch>& mems,
@@ -3713,6 +3714,7 @@ Mapper::align_mem_multi(const Alignment& aln,
         }
     };
 
+    //zkn roi clustering
     // establish the chains
     vector<vector<MaximalExactMatch> > clusters;
     if (total_multimaps) {
@@ -3761,6 +3763,8 @@ Mapper::align_mem_multi(const Alignment& aln,
         show_clusters();
     }
 
+    //zkn I don't see this in vtune trace, and it appears to be set to false at
+    //initialization. Yeah, grep of src shows it is not set anywhere else
     if (use_cluster_mq) {
         cluster_mq = compute_cluster_mapping_quality(clusters, aln.sequence().size());
     }
@@ -3772,6 +3776,7 @@ Mapper::align_mem_multi(const Alignment& aln,
         }
     }
 #endif
+    //zkn looks like this might be an expensive function
     auto to_drop = clusters_to_drop(clusters);
 
     // for up to our required number of multimaps
@@ -4489,6 +4494,10 @@ vector<Alignment> Mapper::align_multi(const Alignment& aln, int kmer_size, int s
     return align_multi_internal(true, clean_aln, kmer_size, stride, max_mem_length, band_width, band_overlap, cluster_mq, max_multimaps, extra_multimaps, nullptr, xdrop_alignment);
 }
     
+//zkn This is the alignment function. It is called by the wrapper just above,
+//and it is called by banded alignment for each band.
+//In theory restrictred_mems gives some potential to pass in Mems, but in
+//practice this is always nullptr so this function must find the mems itself
 vector<Alignment> Mapper::align_multi_internal(bool compute_unpaired_quality,
                                                const Alignment& aln,
                                                int kmer_size, int stride,
@@ -4521,6 +4530,9 @@ vector<Alignment> Mapper::align_multi_internal(bool compute_unpaired_quality,
     // make sure to respect the max multimaps if we haven't been givne a keep multimap count
     if (keep_multimaps == 0) keep_multimaps = max_multimaps;
 
+    //zkn this function is called only if you exceed the band size limit. When
+    //triggered, it invokes to banded alignment which you will recall just
+    //splits a read into a bunch of smaller ones
     // trigger a banded alignment if we need to
     // note that this will in turn call align_multi_internal on fragments of the read
     if (aln.sequence().size() > band_width) {
@@ -4540,6 +4552,9 @@ vector<Alignment> Mapper::align_multi_internal(bool compute_unpaired_quality,
         return vector<Alignment>{align_banded(aln, kmer_size, stride, max_mem_length, band_width, band_overlap, xdrop_alignment)};
     }
 
+    //zkn this timer is used to measure the alignment time. It is attached to
+    //each alignment. Doesn't appear to have a breakdown of clustering to mem
+    //blah blah
     chrono::high_resolution_clock::time_point t1 = chrono::high_resolution_clock::now();
 
     // try to get at least 2 multimaps so that we can calculate mapping quality
@@ -4554,12 +4569,14 @@ vector<Alignment> Mapper::align_multi_internal(bool compute_unpaired_quality,
     double longest_lcp, fraction_filtered;
     vector<Alignment> alignments;
     
+    //zkn this is always nullptr in practice
     // use pre-restricted mems for paired mapping or find mems here
     if (restricted_mems != nullptr) {
         // mem hits will already have been queried
         alignments = align_mem_multi(aln, *restricted_mems, cluster_mq, longest_lcp, fraction_filtered, max_mem_length, keep_multimaps, additional_multimaps_for_quality, xdrop_alignment);
     }
     else {
+        //zkn roi seeding
         vector<MaximalExactMatch> mems = find_mems_deep(aln.sequence().begin(),
                                                         aln.sequence().end(),
                                                         longest_lcp,
@@ -4591,6 +4608,8 @@ vector<Alignment> Mapper::align_multi_internal(bool compute_unpaired_quality,
     }
 #endif
     
+    //zkn it's not clear exactlyu what this is. Seems to use the graph to add
+    //something to the alignment
     algorithms::annotate_with_initial_path_positions(*xindex, alignments);
     chrono::high_resolution_clock::time_point t2 = chrono::high_resolution_clock::now();
     // set time for alignment
