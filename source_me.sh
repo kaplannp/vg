@@ -1,3 +1,7 @@
+#these are added by me zkn
+VG_HOME=$(pwd)
+VTUNE_HOME="/opt/intel/oneapi/vtune/latest"
+
 export LIBRARY_PATH=`pwd`/lib:$LIBRARY_PATH
 export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
 export DYLD_LIBRARY_PATH=`pwd`/lib:$DYLD_LIBRARY_PATH
