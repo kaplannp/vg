@@ -779,6 +779,7 @@ int main_map(int argc, char** argv) {
         }
     };
 
+    //zkn initialize a mapper for each thread
     for (int i = 0; i < thread_count; ++i) {
         Mapper* m = nullptr;
         if(xgidx && gcsa.get() && lcp.get()) {
@@ -848,6 +849,7 @@ int main_map(int argc, char** argv) {
     }
     vector<size_t> reads_mapped_by_thread(thread_count, 0);
 
+    //zkn start a timer for the mapping
     std::chrono::time_point<std::chrono::system_clock> init = std::chrono::system_clock::now();
 
     if (!seq.empty()) {
@@ -884,6 +886,10 @@ int main_map(int argc, char** argv) {
         output_alignments(alignments, empty_alns);
         reads_mapped_by_thread[tid] += 1;
     }
+    //zkn seems like mapping is over now. Why no den of timer? also why wasn't
+    //this in omp parallel. ok actally looks like there are a lot of potential
+    //places for reads, adn that was just one of them. These others could be
+    //triggered as well
 
     if (!read_file.empty()) {
         ifstream in(read_file);
@@ -1240,6 +1246,7 @@ int main_map(int argc, char** argv) {
         delete haplo_score_provider;
         haplo_score_provider = nullptr;
     }
+    //zkn end of alignment sections
     std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
     std::chrono::duration<double> mapping_seconds = end - init;
     std::chrono::duration<double> index_load_seconds = init - launch;

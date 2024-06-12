@@ -3609,22 +3609,38 @@ int sub_overlaps_of_first_aln(const vector<Alignment>& alns, float overlap_fract
     return overlaps;
 }
 
+//zkn This function is about finding the clusters that are not worth extending.
+//There are essentially two criterion:
+//1. is the cluster too small?
+//2. does the cluster overlap a lot with another cluster (i.e. is probably part
+//   of that cluster in which case it isn't worth exploring.
+//This function is expensive because
+//1. to see how long a cluster is or to establish an intersection, you need to
+//   do a O(size of cluster) operation to iterate through everything, and then a
+//   sort operation because the MEMs in the cluster aren't sorted.
+//2. to compare two clusters you need an intersection
+//3. All of these things are in an O(n**2) loop with n the number of clusters
+//   found because you need to check your intersection with everybody else.
 set<const vector<MaximalExactMatch>* > Mapper::clusters_to_drop(const vector<vector<MaximalExactMatch> >& clusters) {
     set<const vector<MaximalExactMatch>* > to_drop;
     vector<double> covs; covs.resize(clusters.size());
     for (int i = 0; i < clusters.size(); ++i) {
+        //zkn this the number of sequential bps in the cluster (no overlap)
         covs[i] = cluster_coverage(clusters[i]);
     }
     for (int i = 0; i < clusters.size(); ++i) {
         // establish overlaps with longer clusters for all clusters
         auto& this_cluster = clusters[i];
         double t = covs[i];
+        //if the cluster is too short, drop it
         if (t < min_cluster_length) {
             to_drop.insert(&this_cluster);
             continue;
         }
         int b = -1;
         int l = t;
+        //zkn this loop makes it n**2 because we are looping through every
+        //cluster
         for (int j = i; j >= 0; --j) {
             if (j == i) continue;
             // are we overlapping?
@@ -3777,6 +3793,8 @@ Mapper::align_mem_multi(const Alignment& aln,
     }
 #endif
     //zkn looks like this might be an expensive function
+    //I believe you are looking for which clusters aren't worth exploring
+    //because they overlap with other clusters
     auto to_drop = clusters_to_drop(clusters);
 
     // for up to our required number of multimaps

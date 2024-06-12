@@ -78,12 +78,20 @@ const string mems_to_json(const vector<MaximalExactMatch>& mems) {
     return s.str();
 }
 
+//zkn this produces the linear sequence in the graph of the mapping of the
+//cluster onto the graph
 vector<string::const_iterator> cluster_cover(const vector<MaximalExactMatch>& cluster) {
     vector<string::const_iterator> seen;
+    //zkn this loop adds the index of every base pair in each cluster to the 
+    //seen vector. seen is a a concatenatation of all the mems in the cluster
     for (auto& mem : cluster) {
         string::const_iterator c = mem.begin;
         while (c != mem.end) seen.push_back(c++);
     }
+    //zkn I suppose here we assume the read won't loop back on itself through a
+    //cycle in the graph. The result is we can sort all the basepairs by index
+    //in the graph, and then we remove any overlaps just getting the unique
+    //ones.
     std::sort(seen.begin(), seen.end());
     seen.erase(unique(seen.begin(), seen.end()), seen.end());
     return seen;
@@ -130,9 +138,12 @@ bool clusters_overlap_in_read(const vector<MaximalExactMatch>& cluster1,
 
 int clusters_overlap_length(const vector<MaximalExactMatch>& cluster1,
                             const vector<MaximalExactMatch>& cluster2) {
+    //zkn recall these cov1/2 are linearized indices into the graph of the
+    //cluster
     vector<string::const_iterator> cov1 = cluster_cover(cluster1);
     vector<string::const_iterator> cov2 = cluster_cover(cluster2);
     vector<string::const_iterator> both;
+    //zkn find the overlap.
     std::set_intersection(cov1.begin(), cov1.end(),
                           cov2.begin(), cov2.end(),
                           std::back_inserter(both));
