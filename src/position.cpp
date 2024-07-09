@@ -45,10 +45,14 @@ Position reverse(const Position& pos, size_t node_length) {
     return p;
 }
 
+//zkn this seems a little sloppy, but if you take a mem as a sequence of
+//locations in the graph, then iterate through all those positions for both mems 
+//
 pair<int64_t, int64_t> min_oriented_distances(const unordered_map<path_handle_t, vector<pair<size_t, bool> > >& path_offsets1,
                                               const unordered_map<path_handle_t, vector<pair<size_t, bool> > >& path_offsets2) {
     int64_t distance_same = std::numeric_limits<int64_t>::max();
     int64_t distance_diff = std::numeric_limits<int64_t>::max();
+    //presumably this path offset is list of location in graph
     for (auto& path : path_offsets1) {
         auto& name = path.first;
         auto f = path_offsets2.find(name);
