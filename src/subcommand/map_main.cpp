@@ -7,6 +7,8 @@
 #include <vg/io/stream.hpp>
 #include <vg/io/vpkg.hpp>
 #include <bdsg/overlays/overlay_helper.hpp>
+//zkn added vtune
+#include "../vtuneConfiguration.h"
 
 #include <unistd.h>
 #include <getopt.h>
@@ -849,6 +851,11 @@ int main_map(int argc, char** argv) {
     }
     vector<size_t> reads_mapped_by_thread(thread_count, 0);
 
+#ifdef VTUNE_ANALYSIS
+  #if (ROI == 1)
+        __itt_resume();
+  #endif
+#endif
     //zkn start a timer for the mapping
     std::chrono::time_point<std::chrono::system_clock> init = std::chrono::system_clock::now();
 
@@ -1248,6 +1255,11 @@ int main_map(int argc, char** argv) {
     }
     //zkn end of alignment sections
     std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
+#ifdef VTUNE_ANALYSIS
+  #if (ROI == 1)
+        __itt_pause();
+  #endif
+#endif
     std::chrono::duration<double> mapping_seconds = end - init;
     std::chrono::duration<double> index_load_seconds = init - launch;
 

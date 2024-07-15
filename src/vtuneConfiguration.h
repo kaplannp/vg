@@ -7,14 +7,15 @@
   #include <ittnotify.h>
 #endif
 
+#define NO_IO
 
 //Mapping ROI value to the region it profiles
 //0->All
-//1->just alignment !NOTE not defined for vg
+//1->just alignment 
 //2->just extension
 #ifdef VTUNE_ANALYSIS
-  #define ROI 0
-  //#define ROI 1
+  //#define ROI 0
+  #define ROI 1
   //#define ROI 2
 #endif
 
