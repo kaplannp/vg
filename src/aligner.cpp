@@ -10,6 +10,8 @@
 #include "null_masking_graph.hpp"
 #include "dozeu_pinning_overlay.hpp"
 #include "algorithms/distance_to_tail.hpp"
+#include "gssw_to_json.hpp"
+#include "nlohmann/json.hpp"
 
 //#define debug_print_score_matrices
 
@@ -1171,6 +1173,10 @@ void Aligner::align_internal(Alignment& alignment, vector<Alignment>* multi_alig
     std::cerr << "save_matrixes " << (int) traceback_aln << std::endl;
 
     readDumpFile << dumpIndex << ": " << *align_sequence << std::endl;
+
+    nlohmann::json obj = dump_graph(graph);
+    std::string s = obj.dump();
+    std::cerr << "json dump is:  " << s << std::endl;
 
     //zkn this is the one I believe we call.
     // perform dynamic programming

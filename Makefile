@@ -69,7 +69,7 @@ DEPGEN_FLAGS := -MMD -MP
 # <https://stackoverflow.com/a/11532197> and
 # <https://github.com/protocolbuffers/protobuf/issues/12998>
 #
-INCLUDE_FLAGS :=-I$(VG_HOME) -I$(VTUNE_HOME)/include -I$(CWD)/$(INC_DIR) -isystem $(CWD)/$(INC_DIR) -I. -I$(CWD)/$(SRC_DIR) -I$(CWD)/$(UNITTEST_SRC_DIR) -I$(CWD)/$(UNITTEST_SUPPORT_SRC_DIR) -I$(CWD)/$(SUBCOMMAND_SRC_DIR) -I$(CWD)/$(INC_DIR)/dynamic $(shell $(PKG_CONFIG) --cflags $(PKG_CONFIG_DEPS) $(PKG_CONFIG_STATIC_DEPS) | tr ' ' '\n' | awk '!x[$$0]++' | tr '\n' ' ' | sed 's/ -I/ -isystem /g')
+INCLUDE_FLAGS :=-I$(VG_HOME)/deps/nlohmann-json/include -I$(VG_HOME) -I$(VTUNE_HOME)/include -I$(CWD)/$(INC_DIR) -isystem $(CWD)/$(INC_DIR) -I. -I$(CWD)/$(SRC_DIR) -I$(CWD)/$(UNITTEST_SRC_DIR) -I$(CWD)/$(UNITTEST_SUPPORT_SRC_DIR) -I$(CWD)/$(SUBCOMMAND_SRC_DIR) -I$(CWD)/$(INC_DIR)/dynamic $(shell $(PKG_CONFIG) --cflags $(PKG_CONFIG_DEPS) $(PKG_CONFIG_STATIC_DEPS) | tr ' ' '\n' | awk '!x[$$0]++' | tr '\n' ' ' | sed 's/ -I/ -isystem /g')
 
 # Define libraries to link vg against.
 # zkn for some reason the VTUNE_HOME doesn't work. I added this path hardcoded
