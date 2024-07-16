@@ -46,3 +46,7 @@ debug_main.cpp
 /*.fa
 /*.gfa
 .vscode/*
+**/tags
+**/cscope.out
+rois/
+

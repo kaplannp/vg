@@ -1068,6 +1068,34 @@ Aligner::Aligner(const int8_t* _score_matrix,
 
 void Aligner::align_internal(Alignment& alignment, vector<Alignment>* multi_alignments, const HandleGraph& g,
                              bool pinned, bool pin_left,int32_t max_alt_alns, bool traceback_aln) const {
+    //zkn this variable is used to control outputs for the dump
+
+
+    const std::string dumpDir = "Dump";
+    const std::string inputDir = dumpDir + "/Inputs";
+    const std::string outDir = dumpDir + "/Out";
+    const std::string graphDumpDir = inputDir + "/Graphs";
+    static int dumpIndex = 0;
+    std::string stager ="";
+    if (dumpIndex == 0){
+      bool failed = false;
+      //initialize the directories if this is the first time in the function
+      stager = "rm -rf " + dumpDir;
+      failed != std::system(stager.c_str());
+      stager = "mkdir " + dumpDir;
+      failed != std::system(stager.c_str());
+      stager = "mkdir " + inputDir;
+      failed != std::system(stager.c_str());
+      stager = "mkdir " + outDir;
+      failed != std::system(stager.c_str());
+      if (failed){
+        std::cerr << "initializing dump directory failed! Aborting" << std::endl;
+        exit(1);
+      }
+    }
+    static std::ofstream readDumpFile(inputDir+"/reads.txt");
+
+    
     // bench_start(bench);
     // check input integrity
     if (pin_left && !pinned) {
@@ -1120,6 +1148,31 @@ void Aligner::align_internal(Alignment& alignment, vector<Alignment>* multi_alig
     // convert into gssw graph
     gssw_graph* graph = create_gssw_graph(*align_graph);
     
+    //zkn printers to get outputs of the stuff
+    std::cerr << "graph size " << sizeof(graph) << std::endl;
+    std::cerr << "nt_table" << std::endl;
+    for (int i = 0; i < align_sequence->length(); i++){
+      std::cerr << (int) nt_table[i] << ", ";
+    }
+    std::cerr << std::endl;
+    //this appears to be something about the different values of bps
+    std::cerr << "score_matrix" << std::endl;
+    for (int i = 0; i < 4; i++){
+      std::cerr << (int) score_matrix[i] << ", ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "weight_gapO " << (int) gap_open << std::endl;
+    std::cerr << "weight_gapE " << (int) gap_extension << std::endl;
+    std::cerr << "start_full_length_bonus " << (int) full_length_bonus << std::endl;
+    const int8_t end_full_length_bonus = pinned ? 0 : full_length_bonus;
+    std::cerr << "end_full_length_bonus " << (int) end_full_length_bonus << std::endl;
+    //std::cerr << "maskLen" << 15 << std::endl;
+    //std::cerr << "score_size" << 2 << std::endl;
+    std::cerr << "save_matrixes " << (int) traceback_aln << std::endl;
+
+    readDumpFile << dumpIndex << ": " << *align_sequence << std::endl;
+
+    //zkn this is the one I believe we call.
     // perform dynamic programming
     gssw_graph_fill_pinned(graph, align_sequence->c_str(),
                            nt_table, score_matrix,
@@ -1285,6 +1338,9 @@ void Aligner::align_internal(Alignment& alignment, vector<Alignment>* multi_alig
     
     gssw_graph_destroy(graph);
     // bench_end(bench);
+    
+    //zkn for dumping inputs
+    dumpIndex++;
 }
 
 void Aligner::align(Alignment& alignment, const HandleGraph& g, bool traceback_aln) const {
