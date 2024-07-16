@@ -39,6 +39,8 @@
 #include <inttypes.h>
 #include <assert.h>
 #include "gssw.h"
+//This is relative to the VG_HOME
+#include "src/vtuneConfiguration.h"
 
 //#define DEBUG_TRACEBACK
 
@@ -1783,6 +1785,7 @@ void gssw_init_destroy (gssw_profile* p) {
     free(p);
 }
 
+//zkn this function is one that calls gssw_sw
 gssw_align* gssw_fill (const gssw_profile* prof,
                        const int8_t* ref,
                        const int32_t refLen,
@@ -5157,7 +5160,6 @@ gssw_seed* gssw_create_seed_word(int32_t readLen, gssw_node** prev, int32_t coun
     return seed;
 }
 
-//zkn this is the function that we consider for profiling.
 gssw_graph*
 gssw_graph_fill_internal (gssw_graph* graph,
                           const char* read_seq,
@@ -5171,6 +5173,23 @@ gssw_graph_fill_internal (gssw_graph* graph,
                           const int32_t maskLen,
                           const int8_t score_size,
                           bool save_matrixes) {
+#ifdef VTUNE_ANALYSIS
+  #if (ROI == 2)
+    static int vtuneStack = 0;
+  #endif
+#endif
+
+#ifdef VTUNE_ANALYSIS
+  #if (ROI == 2)
+    if (vtuneStack == 0) {
+      __itt_resume();
+      //fprintf(stderr,"zkn");
+    }
+    vtuneStack++;
+  #endif
+#endif
+
+    
     int32_t read_length = strlen(read_seq);
     int8_t* read_num = gssw_create_num(read_seq, read_length, nt_table);
     int8_t* qual_num = gssw_create_qual_num(read_qual, read_length);
@@ -5263,6 +5282,19 @@ gssw_graph_fill_internal (gssw_graph* graph,
     free(qual_num);
     gssw_profile_destroy(prof);
 
+#ifdef VTUNE_ANALYSIS
+  #if (ROI == 2)
+    vtuneStack--;
+    if (vtuneStack == 0) {
+      __itt_pause();
+      //fprintf(stderr,"qzt");
+    }
+    if (vtuneStack < 0) {
+      fprintf(stderr, "Vtune stack has become negative! something bad happened");
+    }
+  #endif
+#endif
+
     return graph;
 
 }
@@ -5348,6 +5380,7 @@ gssw_graph_fill_pinned_qual_adj(gssw_graph* graph,
 }
 
 
+//zkn this is the other function that calls gssw_sw_sse2
 gssw_node*
 gssw_node_fill (gssw_node* node,
                 const gssw_profile* prof,
