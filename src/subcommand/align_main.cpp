@@ -222,6 +222,11 @@ int main_align(int argc, char** argv) {
             }
         }
         
+        //zkn this is the only place where an aligner constructor is called (so
+        //it seems. At least the constructor with these arguments. Above you see
+        //the score matrix initialized in a deterministic manner according to
+        //some parameters passed in by cli
+
         // initialize an aligner
         Aligner aligner = Aligner(score_matrix, gap_open, gap_extend, full_length_bonus, vg::default_gc_content);
         

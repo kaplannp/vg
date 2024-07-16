@@ -79,7 +79,7 @@ const string mems_to_json(const vector<MaximalExactMatch>& mems) {
 }
 
 //zkn this produces the linear sequence in the graph of the mapping of the
-//cluster onto the graph
+//cluster onto the graph. 
 vector<string::const_iterator> cluster_cover(const vector<MaximalExactMatch>& cluster) {
     vector<string::const_iterator> seen;
     //zkn this loop adds the index of every base pair in each cluster to the 
