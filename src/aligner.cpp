@@ -1090,12 +1090,18 @@ void Aligner::align_internal(Alignment& alignment, vector<Alignment>* multi_alig
       failed != std::system(stager.c_str());
       stager = "mkdir " + outDir;
       failed != std::system(stager.c_str());
+      stager = "mkdir " + graphDumpDir;
+      failed != std::system(stager.c_str());
       if (failed){
         std::cerr << "initializing dump directory failed! Aborting" << std::endl;
         exit(1);
       }
     }
     static std::ofstream readDumpFile(inputDir+"/reads.txt");
+    std::ofstream graphDumpFile(
+        graphDumpDir + "/g" + std::to_string(dumpIndex) + ".json");
+    std::ofstream outputDumpFile(
+        outDir + "/mapping" + std::to_string(dumpIndex) + ".json");
 
     
     // bench_start(bench);
@@ -1151,32 +1157,42 @@ void Aligner::align_internal(Alignment& alignment, vector<Alignment>* multi_alig
     gssw_graph* graph = create_gssw_graph(*align_graph);
     
     //zkn printers to get outputs of the stuff
-    std::cerr << "graph size " << sizeof(graph) << std::endl;
-    std::cerr << "nt_table" << std::endl;
-    for (int i = 0; i < align_sequence->length(); i++){
-      std::cerr << (int) nt_table[i] << ", ";
-    }
-    std::cerr << std::endl;
-    //this appears to be something about the different values of bps
-    std::cerr << "score_matrix" << std::endl;
-    for (int i = 0; i < 4; i++){
-      std::cerr << (int) score_matrix[i] << ", ";
-    }
-    std::cerr << std::endl;
-    std::cerr << "weight_gapO " << (int) gap_open << std::endl;
-    std::cerr << "weight_gapE " << (int) gap_extension << std::endl;
-    std::cerr << "start_full_length_bonus " << (int) full_length_bonus << std::endl;
-    const int8_t end_full_length_bonus = pinned ? 0 : full_length_bonus;
-    std::cerr << "end_full_length_bonus " << (int) end_full_length_bonus << std::endl;
-    //std::cerr << "maskLen" << 15 << std::endl;
-    //std::cerr << "score_size" << 2 << std::endl;
-    std::cerr << "save_matrixes " << (int) traceback_aln << std::endl;
+    //These should all be constant, or generatable on the fly. They will be
+    //found in a header file of the kernel
+    //std::cerr << "graph size " << sizeof(graph) << std::endl;
+    //std::cerr << "nt_table" << std::endl;
+    //for (int i = 0; i < align_sequence->length(); i++){
+    //  std::cerr << (int) nt_table[i] << ", ";
+    //}
+    //std::cerr << std::endl;
+    ////this appears to be something about the different values of bps
+    //std::cerr << "score_matrix" << std::endl;
+    //for (int i = 0; i < 4; i++){
+    //  std::cerr << (int) score_matrix[i] << ", ";
+    //}
+    //std::cerr << std::endl;
+    //std::cerr << "weight_gapO " << (int) gap_open << std::endl;
+    //std::cerr << "weight_gapE " << (int) gap_extension << std::endl;
+    //std::cerr << "start_full_length_bonus " << (int) full_length_bonus << std::endl;
+    //const int8_t end_full_length_bonus = pinned ? 0 : full_length_bonus;
+    //std::cerr << "end_full_length_bonus " << (int) end_full_length_bonus << std::endl;
+    ////std::cerr << "maskLen" << 15 << std::endl;
+    ////std::cerr << "score_size" << 2 << std::endl;
+    //std::cerr << "save_matrixes " << (int) traceback_aln << std::endl;
 
     readDumpFile << dumpIndex << ": " << *align_sequence << std::endl;
 
-    nlohmann::json obj = dump_graph(graph);
-    std::string s = obj.dump();
-    std::cerr << "json dump is:  " << s << std::endl;
+    nlohmann::json graphJsonSerialized = dump_graph(graph);
+    std::string graphJsonString= graphJsonSerialized.dump(2); //2 for the spacing prettyness
+    graphDumpFile << graphJsonString <<std::endl;
+    //std::cerr << "json dump is:  " << jsonSerialized << std::endl;
+    
+    //This code can be uncommented to confirm the validity of the serialization.
+    //It loads the inputs you just serialized and sends them through alignment
+    //producing identical outputs
+    //gssw_graph* graph2 = ld_graph(graphJsonSerialized);
+    //gssw_graph_destroy(graph);
+    //graph = graph2; //overwrite here
 
     //zkn this is the one I believe we call.
     // perform dynamic programming
@@ -1184,6 +1200,27 @@ void Aligner::align_internal(Alignment& alignment, vector<Alignment>* multi_alig
                            nt_table, score_matrix,
                            gap_open, gap_extension, full_length_bonus,
                            pinned ? 0 : full_length_bonus, 15, 2, traceback_aln);
+
+    //zkn duplicating the traceaback. This is added just for the dumping to file
+    if (pinned) {
+      std::cerr << "Pinning is used. This is an untested feature in the"
+        " benchmark. You are in untested waters. In particular, it is likely"
+        " that the ground truth outputs generated for your read set are "
+        " inaccurate." << std::endl;
+    }
+    gssw_graph_mapping* ggm = gssw_graph_trace_back (graph,
+                                                    align_sequence->c_str(),
+                                                    align_sequence->size(),
+                                                    nt_table,
+                                                    score_matrix,
+                                                    gap_open,
+                                                    gap_extension,
+                                                    full_length_bonus,
+                                                    full_length_bonus);
+    nlohmann::json ggmJsonSerialized = dump_graph_mapping(ggm);
+    std::string ggmJsonString = ggmJsonSerialized.dump(2);
+    outputDumpFile << ggmJsonString << std::endl;
+    gssw_graph_mapping_destroy(ggm);
 
     // traceback either from pinned position or optimal local alignment
     if (traceback_aln) {
