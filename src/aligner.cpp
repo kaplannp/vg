@@ -1100,8 +1100,6 @@ void Aligner::align_internal(Alignment& alignment, vector<Alignment>* multi_alig
     static std::ofstream readDumpFile(inputDir+"/reads.txt");
     std::ofstream graphDumpFile(
         graphDumpDir + "/g" + std::to_string(dumpIndex) + ".json");
-    //std::ofstream outputDumpFile(
-    //    outDir + "/mapping" + std::to_string(dumpIndex) + ".json");
     stager = outDir + "/mapping" + std::to_string(dumpIndex) + ".json";
     FILE* outputDumpFile;
     outputDumpFile = fopen(stager.c_str(), "w");
@@ -1223,9 +1221,6 @@ void Aligner::align_internal(Alignment& alignment, vector<Alignment>* multi_alig
                                                     full_length_bonus,
                                                     full_length_bonus);
     
-    //nlohmann::json ggmJsonSerialized = dump_graph_mapping(ggm);
-    //std::string ggmJsonString = ggmJsonSerialized.dump(2);
-    //outputDumpFile << ggmJsonString << std::endl;
     gssw_print_graph_mapping(ggm, outputDumpFile);
     fclose(outputDumpFile);
     gssw_graph_mapping_destroy(ggm);

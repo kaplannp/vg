@@ -11,13 +11,6 @@
 using nJson = nlohmann::json;
 
 /*
- * generates a json string for a ggm. Note, for now I'm planning to ignore the
- * cigar part and just dump score and position, but we may choose to add more
- * later
- */
-nJson dump_graph_mapping(gssw_graph_mapping* ggm);
-
-/*
  * @param gssw_graph* the graph to serialize
  * @return nlohman::json the json for that graph
  */
