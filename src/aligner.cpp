@@ -1100,8 +1100,12 @@ void Aligner::align_internal(Alignment& alignment, vector<Alignment>* multi_alig
     static std::ofstream readDumpFile(inputDir+"/reads.txt");
     std::ofstream graphDumpFile(
         graphDumpDir + "/g" + std::to_string(dumpIndex) + ".json");
-    std::ofstream outputDumpFile(
-        outDir + "/mapping" + std::to_string(dumpIndex) + ".json");
+    //std::ofstream outputDumpFile(
+    //    outDir + "/mapping" + std::to_string(dumpIndex) + ".json");
+    stager = outDir + "/mapping" + std::to_string(dumpIndex) + ".json";
+    FILE* outputDumpFile;
+    outputDumpFile = fopen(stager.c_str(), "w");
+         
 
     
     // bench_start(bench);
@@ -1167,7 +1171,7 @@ void Aligner::align_internal(Alignment& alignment, vector<Alignment>* multi_alig
     //std::cerr << std::endl;
     ////this appears to be something about the different values of bps
     //std::cerr << "score_matrix" << std::endl;
-    //for (int i = 0; i < 4; i++){
+    //for (int i = 0; i < 25; i++){
     //  std::cerr << (int) score_matrix[i] << ", ";
     //}
     //std::cerr << std::endl;
@@ -1201,6 +1205,7 @@ void Aligner::align_internal(Alignment& alignment, vector<Alignment>* multi_alig
                            gap_open, gap_extension, full_length_bonus,
                            pinned ? 0 : full_length_bonus, 15, 2, traceback_aln);
 
+
     //zkn duplicating the traceaback. This is added just for the dumping to file
     if (pinned) {
       std::cerr << "Pinning is used. This is an untested feature in the"
@@ -1217,9 +1222,12 @@ void Aligner::align_internal(Alignment& alignment, vector<Alignment>* multi_alig
                                                     gap_extension,
                                                     full_length_bonus,
                                                     full_length_bonus);
-    nlohmann::json ggmJsonSerialized = dump_graph_mapping(ggm);
-    std::string ggmJsonString = ggmJsonSerialized.dump(2);
-    outputDumpFile << ggmJsonString << std::endl;
+    
+    //nlohmann::json ggmJsonSerialized = dump_graph_mapping(ggm);
+    //std::string ggmJsonString = ggmJsonSerialized.dump(2);
+    //outputDumpFile << ggmJsonString << std::endl;
+    gssw_print_graph_mapping(ggm, outputDumpFile);
+    fclose(outputDumpFile);
     gssw_graph_mapping_destroy(ggm);
 
     // traceback either from pinned position or optimal local alignment
