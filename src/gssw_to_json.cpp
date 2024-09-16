@@ -7,15 +7,6 @@
 
 using nJson = nlohmann::json;
 
-nJson dump_graph_mapping(gssw_graph_mapping* ggm){
-  nJson o;
-  o["position"] = ggm->position;
-  o["score"] = ggm->score;
-  //ignoring this for now. Maybe not necessary
-  //o["cigar"] = call function for this
-  return o;
-}
-
 nJson dump_graph(gssw_graph* g){
    nJson o;
    o["size"] = g->size;
