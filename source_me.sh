@@ -1,5 +1,6 @@
 #these are added by me zkn
 export VG_HOME=$(pwd)
+echo "VG_HOME=$VG_HOME"
 export VTUNE_HOME="/opt/intel/oneapi/vtune/latest"
 
 export LIBRARY_PATH=`pwd`/lib:$LIBRARY_PATH
