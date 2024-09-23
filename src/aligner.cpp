@@ -1076,9 +1076,9 @@ void Aligner::align_internal(Alignment& alignment, vector<Alignment>* multi_alig
     const std::string dumpDir = "Dump";
     const std::string inputDir = dumpDir + "/Inputs";
     const std::string outDir = dumpDir + "/Out";
-    const std::string graphDumpDir = inputDir + "/Graphs";
     static int dumpIndex = 0;
     std::string stager ="";
+    static FILE* outputDumpFile;
     if (dumpIndex == 0){
       bool failed = false;
       //initialize the directories if this is the first time in the function
@@ -1090,21 +1090,15 @@ void Aligner::align_internal(Alignment& alignment, vector<Alignment>* multi_alig
       failed != std::system(stager.c_str());
       stager = "mkdir " + outDir;
       failed != std::system(stager.c_str());
-      stager = "mkdir " + graphDumpDir;
-      failed != std::system(stager.c_str());
       if (failed){
         std::cerr << "initializing dump directory failed! Aborting" << std::endl;
         exit(1);
       }
+      stager = outDir + "/mapping.json";
+      outputDumpFile = fopen(stager.c_str(), "w");
     }
     static std::ofstream readDumpFile(inputDir+"/reads.txt");
-    std::ofstream graphDumpFile(
-        graphDumpDir + "/g" + std::to_string(dumpIndex) + ".json");
-    stager = outDir + "/mapping" + std::to_string(dumpIndex) + ".json";
-    FILE* outputDumpFile;
-    outputDumpFile = fopen(stager.c_str(), "w");
-         
-
+    static std::ofstream graphDumpFile(inputDir+"/graph.json");
     
     // bench_start(bench);
     // check input integrity
@@ -1222,7 +1216,7 @@ void Aligner::align_internal(Alignment& alignment, vector<Alignment>* multi_alig
                                                     full_length_bonus);
     
     gssw_print_graph_mapping(ggm, outputDumpFile);
-    fclose(outputDumpFile);
+    //fclose(outputDumpFile);
     gssw_graph_mapping_destroy(ggm);
 
     // traceback either from pinned position or optimal local alignment
