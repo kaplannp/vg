@@ -14,8 +14,8 @@ export LD_INCLUDE_PATH=`pwd`/include:$LD_INCLUDE_PATH
 export CFLAGS="-I $(pwd)/include ${CFLAGS}"
 export CXXFLAGS="-I $(pwd)/include -I$(pwd)/include/dynamic ${CXXFLAGS}"
 export PATH=`pwd`/bin:`pwd`/scripts:"$PATH"
-export CC=$(which gcc)
-export CXX=$(which g++)
+export CC=gcc-11
+export CXX=g++-11
 
 #
 #  disable until file arguments work as in normal bash :(
