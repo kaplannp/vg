@@ -937,7 +937,7 @@ int main_map(int argc, char** argv) {
     if (!fasta_file.empty()) {
         FastaReference ref;
         ref.open(fasta_file);
-        auto align_seq = [&](const string& name, const string& seq, double start) {
+        auto align_seq = [&](const string& name, const string& seq, double& end ) {
             if (!seq.empty()) {
                 // Make an alignment
                 Alignment unaligned;
@@ -961,24 +961,23 @@ int main_map(int argc, char** argv) {
                 output_alignments(alignments, empty_alns);
 
                 reads_mapped_by_thread[tid] += 1;
-                if (reads_mapped_by_thread[tid] == (ref.index->sequenceNames.size()/omp_get_num_threads())){
-                  double end = omp_get_wtime();
-                  double time = end - start;
-                  fprintf(stderr, "Thread %d mapped %ld reads in %f seconds\n", tid, reads_mapped_by_thread[tid], time);
-                }
+                end = omp_get_wtime();
             }
         };
 #pragma omp parallel
         {
           double start = omp_get_wtime();
+          double end = 0.0;
           
           int tid = omp_get_thread_num();
 #pragma omp for
           for (size_t i = 0; i < ref.index->sequenceNames.size(); ++i) {
               auto& name = ref.index->sequenceNames[i];
               string seq = vg::nonATGCNtoN(vg::toUppercase(ref.getSequence(name)));
-              align_seq(name, seq, start);
+              align_seq(name, seq, end);
           }
+          double time = end - start;
+          fprintf(stderr, "Thread %d mapped %ld reads in %f seconds\n", tid, reads_mapped_by_thread[tid], time);
         }
     }
 
