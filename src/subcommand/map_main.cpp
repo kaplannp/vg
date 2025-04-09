@@ -7,8 +7,7 @@
 #include <vg/io/stream.hpp>
 #include <vg/io/vpkg.hpp>
 #include <bdsg/overlays/overlay_helper.hpp>
-//zkn added vtune
-#include "../vtuneConfiguration.h"
+#include <iostream>
 
 #include <unistd.h>
 #include <getopt.h>
@@ -851,11 +850,6 @@ int main_map(int argc, char** argv) {
     }
     vector<size_t> reads_mapped_by_thread(thread_count, 0);
 
-#ifdef VTUNE_ANALYSIS
-  #if (ROI == 1)
-        __itt_resume();
-  #endif
-#endif
     //zkn start a timer for the mapping
     std::chrono::time_point<std::chrono::system_clock> init = std::chrono::system_clock::now();
 
@@ -939,10 +933,11 @@ int main_map(int argc, char** argv) {
         }
     }
 
+    //zknzkn this is where we do the fasta
     if (!fasta_file.empty()) {
         FastaReference ref;
         ref.open(fasta_file);
-        auto align_seq = [&](const string& name, const string& seq) {
+        auto align_seq = [&](const string& name, const string& seq, double start) {
             if (!seq.empty()) {
                 // Make an alignment
                 Alignment unaligned;
@@ -966,13 +961,24 @@ int main_map(int argc, char** argv) {
                 output_alignments(alignments, empty_alns);
 
                 reads_mapped_by_thread[tid] += 1;
+                if (reads_mapped_by_thread[tid] == (ref.index->sequenceNames.size()/omp_get_num_threads())){
+                  double end = omp_get_wtime();
+                  double time = end - start;
+                  fprintf(stderr, "Thread %d mapped %ld reads in %f seconds\n", tid, reads_mapped_by_thread[tid], time);
+                }
             }
         };
-#pragma omp parallel for
-        for (size_t i = 0; i < ref.index->sequenceNames.size(); ++i) {
-            auto& name = ref.index->sequenceNames[i];
-            string seq = vg::nonATGCNtoN(vg::toUppercase(ref.getSequence(name)));
-            align_seq(name, seq);
+#pragma omp parallel
+        {
+          double start = omp_get_wtime();
+          
+          int tid = omp_get_thread_num();
+#pragma omp for
+          for (size_t i = 0; i < ref.index->sequenceNames.size(); ++i) {
+              auto& name = ref.index->sequenceNames[i];
+              string seq = vg::nonATGCNtoN(vg::toUppercase(ref.getSequence(name)));
+              align_seq(name, seq, start);
+          }
         }
     }
 
@@ -1255,11 +1261,6 @@ int main_map(int argc, char** argv) {
     }
     //zkn end of alignment sections
     std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
-#ifdef VTUNE_ANALYSIS
-  #if (ROI == 1)
-        __itt_pause();
-  #endif
-#endif
     std::chrono::duration<double> mapping_seconds = end - init;
     std::chrono::duration<double> index_load_seconds = init - launch;
 
