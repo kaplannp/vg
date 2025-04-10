@@ -964,13 +964,14 @@ int main_map(int argc, char** argv) {
                 end = omp_get_wtime();
             }
         };
+        fprintf(stderr, "about to enter the parallel region");
 #pragma omp parallel
         {
           double start = omp_get_wtime();
           double end = 0.0;
           
           int tid = omp_get_thread_num();
-#pragma omp for
+#pragma omp for schedule(dynamic)
           for (size_t i = 0; i < ref.index->sequenceNames.size(); ++i) {
               auto& name = ref.index->sequenceNames[i];
               string seq = vg::nonATGCNtoN(vg::toUppercase(ref.getSequence(name)));
